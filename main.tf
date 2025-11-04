@@ -38,8 +38,8 @@ resource "aws_security_group" "flask_sg" {
   name        = "flask_sg"
   description = "Allow HTTP"
   ingress {
-    from_port   = 80
-    to_port     = 80
+    from_port   = 5000
+    to_port     = 5000
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
