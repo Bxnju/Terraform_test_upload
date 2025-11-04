@@ -9,24 +9,21 @@ resource "aws_instance" "flask_server" {
 
   user_data = <<-EOF
               #!/bin/bash
-              apt update -y
-              apt install -y git python3-pip
+              set -e
+              sudo apt update -y
+              sudo apt install -y git python3-pip
               # Clona tu repo público
               git clone https://github.com/Bxnju/Terraform_test_upload.git /home/ubuntu/app
               chown -R ubuntu:ubuntu /home/ubuntu/app
+
               if [ -f /home/ubuntu/app/requirements.txt ]; then
                 pip3 install -r /home/ubuntu/app/requirements.txt
               else
                 pip3 install Flask==2.3.2
               fi
-              nohup python3 /home/ubuntu/app/app.py > /home/ubuntu/app/app.log 2>&1 &
 
-              # Cron simple: cada minuto hace git pull (útil para testing)
-              cat > /etc/cron.d/app_pull <<'CRON'
-              * * * * * ubuntu cd /home/ubuntu/app && git pull origin main && if [ -f /home/ubuntu/app/requirements.txt ]; then /usr/bin/pip3 install -r /home/ubuntu/app/requirements.txt; fi
-              CRON
-              chmod 644 /etc/cron.d/app_pull
-              service cron restart
+              # Ejecuta la app (simple, para testing)
+              nohup python3 /home/ubuntu/app/app.py > /home/ubuntu/app/app.log 2>&1 &
               EOF
 
   tags = {
