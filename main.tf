@@ -5,7 +5,7 @@ provider "aws" {
 resource "aws_instance" "flask_server" {
   ami           = "ami-0ecb62995f68bb549"  # ejemplo Ubuntu 22.04 en us-east-1
   instance_type = "t2.micro"
-  #key_name      = "mi-key-aws"
+  key_name      = "Tank_IoT"
 
   user_data = <<-EOF
               #!/bin/bash
@@ -56,6 +56,12 @@ resource "aws_security_group" "flask_sg" {
   ingress {
     from_port   = 5000
     to_port     = 5000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 22
+    to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
