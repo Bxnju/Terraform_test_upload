@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def hello():
-    return "Hola Mundo 2 desde Flask en EC2! <br> Actualizado para prueba de CI/CD con SESSION TOKEN."
+    return "Nossss fuimossss"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

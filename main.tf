@@ -10,21 +10,37 @@ resource "aws_instance" "flask_server" {
   user_data = <<-EOF
               #!/bin/bash
               set -e
-              sudo apt update -y
-              sudo apt install -y git python3-pip
-              # Clona tu repo público
-              git clone https://github.com/Bxnju/Terraform_test_upload.git /home/ubuntu/app
-              chown -R ubuntu:ubuntu /home/ubuntu/app
 
-              if [ -f /home/ubuntu/app/requirements.txt ]; then
-                pip3 install -r /home/ubuntu/app/requirements.txt
+              # Variables
+              REPO_URL="https://github.com/Bxnju/Terraform_test_upload"
+              APP_DIR="/home/ubuntu/Terraform_Test_upload"
+
+              apt update -y
+              apt install -y python3-pip git
+
+              # Clonar el repo (si ya existe, hacer pull)
+              if [ ! -d "$APP_DIR" ]; then
+                git clone "$REPO_URL" "$APP_DIR"
+                chown -R ubuntu:ubuntu "$APP_DIR"
               else
+                cd "$APP_DIR"
+                git pull
+              fi
+
+              cd "$APP_DIR"
+
+              # Instalar requirements si existe requirements.txt
+              if [ -f "requirements.txt" ]; then
+                pip3 install -r requirements.txt
+              else
+                # fallback: asegurar Flask disponible
                 pip3 install Flask==2.3.2
               fi
 
-              # Ejecuta la app (simple, para testing)
-              nohup python3 /home/ubuntu/app/app.py > /home/ubuntu/app/app.log 2>&1 &
-              EOF
+              # Ejecutar la app (suponer app.py en la raíz del repo)
+              # Ejecutar como usuario ubuntu y redirigir logs
+              nohup sudo -u ubuntu python3 "$APP_DIR/app.py" > /var/log/flask_app.log 2>&1 &
+              EOF
 
   tags = {
     Name = "FlaskServer"
