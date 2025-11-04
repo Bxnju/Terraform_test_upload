@@ -35,7 +35,7 @@ jobs:
             echo "No instances with tag Name=FlaskServer found."
           fi
 
-      - name: Pre-clean: delete security group named flask_sg
+      - name: Pre-clean delete security group named flask_sg
         env:
           AWS_REGION: us-east-1
         run: |
