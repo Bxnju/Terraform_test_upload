@@ -1,4 +1,4 @@
-name: Deploy Flask EC2
+name: Deploy Flask EC2 (destroy then apply)
 
 on:
   push:
@@ -20,6 +20,33 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # opcional si usas credenciales temporales
           aws-region: us-east-1
 
+      - name: Pre-clean terminate instances tagged Name=FlaskServer
+        env:
+          AWS_REGION: us-east-1
+        run: |
+          IDS=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=FlaskServer" "Name=instance-state-name,Values=running,stopped,stopping,pending" \
+            --query 'Reservations[*].Instances[*].InstanceId' --output text 2>/dev/null || true)
+          if [ -n "$IDS" ] && [ "$IDS" != "None" ]; then
+            echo "Terminating instances: $IDS"
+            aws ec2 terminate-instances --instance-ids $IDS || true
+            aws ec2 wait instance-terminated --instance-ids $IDS || true
+          else
+            echo "No instances with tag Name=FlaskServer found."
+          fi
+
+      - name: Pre-clean: delete security group named flask_sg
+        env:
+          AWS_REGION: us-east-1
+        run: |
+          SG_ID=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=flask_sg" --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null || true)
+          if [ -n "$SG_ID" ] && [ "$SG_ID" != "None" ]; then
+            echo "Deleting SG $SG_ID"
+            aws ec2 delete-security-group --group-id "$SG_ID" || echo "Delete SG failed (maybe in use)"
+          else
+            echo "No security group named flask_sg found."
+          fi
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -27,6 +54,9 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
+
+      - name: Terraform Destroy (best-effort)
+        run: terraform destroy -auto-approve || echo "terraform destroy failed or no state present"
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
